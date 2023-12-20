@@ -1,0 +1,20 @@
+server:
+  port: 8080
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database: mysql
+  # Master
+  datasource:
+    username: rw_user
+    password: 'rw@123456'
+    url: jdbc:mysql://localhost:23306/take_home_test
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # Slave
+#  datasource:
+#   username: r_user
+#   password: 'r@123456'
+#   url: jdbc:mysql://localhost:33306/take_home_test
+#   driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,0 +1,89 @@
+services:
+  nginx-slb:
+    build:
+      dockerfile: ./Dockerfile_nginx
+    ports:
+      - "9090:9090"
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.0.105
+    depends_on:
+      - spring-boot-master
+      - spring-boot-slave
+  spring-boot-master:
+    build:
+      dockerfile: ./Dockerfile_master
+    ports:
+      - "8080:8080"
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.0.100
+    depends_on:
+      - mysql-slave
+  spring-boot-slave:
+    build:
+      dockerfile: ./Dockerfile_slave
+    ports:
+      - "8081:8081"
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.0.101
+    depends_on:
+      - mysql-slave
+  mysql-master:
+    image: "mysql:latest"
+    ports:
+      - "23306:3306"
+    container_name: mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: 'admin@123456'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'take_home_test'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      MASTER_SYNC_USER: sync_user
+      MASTER_SYNC_PASSWORD: 'sync@123456'
+      SYNC_ALLOW_HOST: '%'
+      R_W_USER: rw_user
+      R_W_USER_PASSWORD: 'rw@123456'
+      R_W_USER_HOST: '%'
+      R_W_DATABASE: '*'
+    volumes:
+      - ./mysql/master.sh:/docker-entrypoint-initdb.d/master.sh
+      - ./mysql/master.cnf:/etc/my.cnf
+      - ./mysql/data_master:/var/lib/mysql
+    restart: always
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.0.124
+  mysql-slave:
+    image: "mysql:latest"
+    ports:
+      - "33306:3306"
+    container_name: mysql-slave
+    environment:
+      MYSQL_ROOT_PASSWORD: 'admin@123456'
+      MYSQL_DATABASE: 'take_home_test'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+      MASTER_HOST: 192.168.0.124
+      MASTER_PORT: 3306
+      MASTER_SYNC_USER: sync_user
+      MASTER_SYNC_PASSWORD: 'sync@123456'
+      R_USER: r_user
+      R_USER_PASSWORD: 'r@123456'
+      R_USER_HOST: '%'
+    volumes:
+      - ./mysql/slave.sh:/docker-entrypoint-initdb.d/slave.sh
+      - ./mysql/slave.cnf:/etc/my.cnf
+      - ./mysql/data_slave:/var/lib/mysql
+    restart: always
+    networks:
+      mysql_net:
+        ipv4_address: 192.168.0.125
+    depends_on:
+      - mysql-master
+networks:
+  mysql_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.0.0/24"
