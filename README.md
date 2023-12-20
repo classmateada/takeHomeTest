@@ -31,6 +31,19 @@ MySQL 主从架构的实现方式为主节点（Master）向从节点（Slave）
 5. `docker-compose up -d` 启动全部五个容器。
 6. `curl http://localhost:9090` 即可看到“Hello world”和返回该信息的 Spring Boot 实例所运行的端口。
 
+## 该方案的优点与不足
+
+### 优点
+
+1. 一键启动。由于项目中所有组件都是使用 docker-compose 进行部署的，所以可以使用 `docker-compose up -d` 命令一键启动。
+2. 环境的要求低。同样是由于使用了 Docker 部署所有的组件，服务器上只需要装有 Docker、docker-compose 和 Java 便能完成部署。若本地已经有构建好的 Spring Boot jar 包，那么 Java 也不是必须的。
+
+### 不足
+
+1. docker-compose 在启动 MySQL 容器时，未等 MySQL 准备好接受链接便会认为 MySQL 容器已经启动完成，进而直接启动 Spring Boot 容器。若 MySQL 容器启动过慢，可能会导致 Spring Boot 连接 MySQL 失败，后续可以考虑加入延时操作。
+2. 该方案由于使用了 docker network，暂时只支持在一台机器上运行。可以考虑使用 Overlay Network 或 Kubernetes 来解决这个问题。
+3. 该方案为便于部署将 MySQL 部署在容器中，但这并非最佳方案，真正部署时 MySQL 最好还是应该直接部署。
+
 ## 更好的方案
 
 使用 Kubernetes。由于 docker-compose 若要将服务实例部署在多台服务器上必须一台一台地手动启动，而 Kubernetes 则可以做到一键部署多个实例，同时还自带负载均衡器和网关 Ingress，所以若有将服务实例部署在多台服务器上的需求，使用单独的服务器安装 MySQL 并使用 Kubernetes 部署服务实例是更好的方式。本次因受限于时间，所以暂时没有实现该方案，仅仅绘制了架构图。架构图如下所示：
